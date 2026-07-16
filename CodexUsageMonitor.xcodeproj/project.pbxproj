@@ -1,0 +1,92 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {};
+	objectVersion = 77;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		A10000000000000000000001 /* CodexUsageMonitorApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = B10000000000000000000001 /* CodexUsageMonitorApp.swift */; };
+		A10000000000000000000002 /* UsageModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = B10000000000000000000002 /* UsageModels.swift */; };
+		A10000000000000000000003 /* CodexAppServerClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = B10000000000000000000003 /* CodexAppServerClient.swift */; };
+		A10000000000000000000004 /* UsageStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = B10000000000000000000004 /* UsageStore.swift */; };
+		A10000000000000000000005 /* UsageMenuView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B10000000000000000000005 /* UsageMenuView.swift */; };
+		A10000000000000000000006 /* QuotaNotifications.swift in Sources */ = {isa = PBXBuildFile; fileRef = B10000000000000000000007 /* QuotaNotifications.swift */; };
+		A20000000000000000000001 /* UsageStatisticsTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = B20000000000000000000001 /* UsageStatisticsTests.swift */; };
+		A20000000000000000000002 /* CodexAppServerClientTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = B20000000000000000000002 /* CodexAppServerClientTests.swift */; };
+		A20000000000000000000003 /* UsageStoreTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = B20000000000000000000003 /* UsageStoreTests.swift */; };
+		A20000000000000000000004 /* QuotaNotificationTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = B20000000000000000000004 /* QuotaNotificationTests.swift */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXContainerItemProxy section */
+		C20000000000000000000001 = {isa = PBXContainerItemProxy; containerPortal = D00000000000000000000001 /* Project object */; proxyType = 1; remoteGlobalIDString = E10000000000000000000001; remoteInfo = CodexUsageMonitor; };
+/* End PBXContainerItemProxy section */
+
+/* Begin PBXFileReference section */
+		B10000000000000000000001 /* CodexUsageMonitorApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CodexUsageMonitorApp.swift; sourceTree = "<group>"; };
+		B10000000000000000000002 /* UsageModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UsageModels.swift; sourceTree = "<group>"; };
+		B10000000000000000000003 /* CodexAppServerClient.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CodexAppServerClient.swift; sourceTree = "<group>"; };
+		B10000000000000000000004 /* UsageStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UsageStore.swift; sourceTree = "<group>"; };
+		B10000000000000000000005 /* UsageMenuView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UsageMenuView.swift; sourceTree = "<group>"; };
+		B10000000000000000000006 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+		B10000000000000000000007 /* QuotaNotifications.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = QuotaNotifications.swift; sourceTree = "<group>"; };
+		B20000000000000000000001 /* UsageStatisticsTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UsageStatisticsTests.swift; sourceTree = "<group>"; };
+		B20000000000000000000002 /* CodexAppServerClientTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CodexAppServerClientTests.swift; sourceTree = "<group>"; };
+		B20000000000000000000003 /* UsageStoreTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UsageStoreTests.swift; sourceTree = "<group>"; };
+		B20000000000000000000004 /* QuotaNotificationTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = QuotaNotificationTests.swift; sourceTree = "<group>"; };
+		B30000000000000000000001 /* Codex Usage Monitor.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "Codex Usage Monitor.app"; sourceTree = BUILT_PRODUCTS_DIR; };
+		B30000000000000000000002 /* CodexUsageMonitorTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = CodexUsageMonitorTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+/* End PBXFileReference section */
+
+/* Begin PBXFrameworksBuildPhase section */
+		F10000000000000000000001 = {isa = PBXFrameworksBuildPhase; buildActionMask = 2147483647; files = (); runOnlyForDeploymentPostprocessing = 0; };
+		F20000000000000000000001 = {isa = PBXFrameworksBuildPhase; buildActionMask = 2147483647; files = (); runOnlyForDeploymentPostprocessing = 0; };
+/* End PBXFrameworksBuildPhase section */
+
+/* Begin PBXGroup section */
+		D10000000000000000000001 = {isa = PBXGroup; children = (D10000000000000000000002 /* CodexUsageMonitor */, D10000000000000000000003 /* CodexUsageMonitorTests */, D10000000000000000000004 /* Products */); sourceTree = "<group>"; };
+		D10000000000000000000002 /* CodexUsageMonitor */ = {isa = PBXGroup; children = (B10000000000000000000001, B10000000000000000000002, B10000000000000000000003, B10000000000000000000004, B10000000000000000000005, B10000000000000000000007, B10000000000000000000006); path = CodexUsageMonitor; sourceTree = "<group>"; };
+		D10000000000000000000003 /* CodexUsageMonitorTests */ = {isa = PBXGroup; children = (B20000000000000000000001, B20000000000000000000002, B20000000000000000000003, B20000000000000000000004); path = CodexUsageMonitorTests; sourceTree = "<group>"; };
+		D10000000000000000000004 /* Products */ = {isa = PBXGroup; children = (B30000000000000000000001, B30000000000000000000002); name = Products; sourceTree = "<group>"; };
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+		E10000000000000000000001 /* CodexUsageMonitor */ = {isa = PBXNativeTarget; buildConfigurationList = H10000000000000000000001; buildPhases = (S10000000000000000000001, F10000000000000000000001, R10000000000000000000001); buildRules = (); dependencies = (); name = CodexUsageMonitor; productName = "Codex Usage Monitor"; productReference = B30000000000000000000001; productType = "com.apple.product-type.application"; };
+		E20000000000000000000001 /* CodexUsageMonitorTests */ = {isa = PBXNativeTarget; buildConfigurationList = H20000000000000000000001; buildPhases = (S20000000000000000000001, F20000000000000000000001, R20000000000000000000001); buildRules = (); dependencies = (C30000000000000000000001); name = CodexUsageMonitorTests; productName = CodexUsageMonitorTests; productReference = B30000000000000000000002; productType = "com.apple.product-type.bundle.unit-test"; };
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		D00000000000000000000001 /* Project object */ = {isa = PBXProject; attributes = {BuildIndependentTargetsInParallel = 1; LastSwiftUpdateCheck = 2660; LastUpgradeCheck = 2660; TargetAttributes = {E10000000000000000000001 = {CreatedOnToolsVersion = 26.0;}; E20000000000000000000001 = {CreatedOnToolsVersion = 26.0; TestTargetID = E10000000000000000000001;};};}; buildConfigurationList = H00000000000000000000001; compatibilityVersion = "Xcode 16.0"; developmentRegion = zh_Hans; hasScannedForEncodings = 0; knownRegions = (zh_Hans, Base); mainGroup = D10000000000000000000001; productRefGroup = D10000000000000000000004; projectDirPath = ""; projectRoot = ""; targets = (E10000000000000000000001, E20000000000000000000001); };
+/* End PBXProject section */
+
+/* Begin PBXResourcesBuildPhase section */
+		R10000000000000000000001 = {isa = PBXResourcesBuildPhase; buildActionMask = 2147483647; files = (); runOnlyForDeploymentPostprocessing = 0; };
+		R20000000000000000000001 = {isa = PBXResourcesBuildPhase; buildActionMask = 2147483647; files = (); runOnlyForDeploymentPostprocessing = 0; };
+/* End PBXResourcesBuildPhase section */
+
+/* Begin PBXSourcesBuildPhase section */
+		S10000000000000000000001 = {isa = PBXSourcesBuildPhase; buildActionMask = 2147483647; files = (A10000000000000000000001, A10000000000000000000002, A10000000000000000000003, A10000000000000000000004, A10000000000000000000005, A10000000000000000000006); runOnlyForDeploymentPostprocessing = 0; };
+		S20000000000000000000001 = {isa = PBXSourcesBuildPhase; buildActionMask = 2147483647; files = (A20000000000000000000001, A20000000000000000000002, A20000000000000000000003, A20000000000000000000004); runOnlyForDeploymentPostprocessing = 0; };
+/* End PBXSourcesBuildPhase section */
+
+/* Begin PBXTargetDependency section */
+		C30000000000000000000001 = {isa = PBXTargetDependency; target = E10000000000000000000001; targetProxy = C20000000000000000000001; };
+/* End PBXTargetDependency section */
+
+/* Begin XCBuildConfiguration section */
+		I00000000000000000000001 = {isa = XCBuildConfiguration; buildSettings = {CLANG_ENABLE_MODULES = YES; MACOSX_DEPLOYMENT_TARGET = 14.0; SDKROOT = macosx;}; name = Debug; };
+		I00000000000000000000002 = {isa = XCBuildConfiguration; buildSettings = {CLANG_ENABLE_MODULES = YES; MACOSX_DEPLOYMENT_TARGET = 14.0; SDKROOT = macosx;}; name = Release; };
+		I10000000000000000000001 = {isa = XCBuildConfiguration; buildSettings = {ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES; CODE_SIGN_STYLE = Automatic; COMBINE_HIDPI_IMAGES = YES; CURRENT_PROJECT_VERSION = 1; ENABLE_TESTABILITY = YES; GENERATE_INFOPLIST_FILE = NO; INFOPLIST_FILE = CodexUsageMonitor/Info.plist; LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/../Frameworks"; MARKETING_VERSION = 1.0; ONLY_ACTIVE_ARCH = YES; PRODUCT_BUNDLE_IDENTIFIER = io.damao.CodexUsageMonitor; PRODUCT_MODULE_NAME = CodexUsageMonitor; PRODUCT_NAME = "Codex Usage Monitor"; SWIFT_EMIT_LOC_STRINGS = YES; SWIFT_OPTIMIZATION_LEVEL = "-Onone"; SWIFT_VERSION = 5.0;}; name = Debug; };
+		I10000000000000000000002 = {isa = XCBuildConfiguration; buildSettings = {ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES; CODE_SIGN_STYLE = Automatic; COMBINE_HIDPI_IMAGES = YES; CURRENT_PROJECT_VERSION = 1; GENERATE_INFOPLIST_FILE = NO; INFOPLIST_FILE = CodexUsageMonitor/Info.plist; LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/../Frameworks"; MARKETING_VERSION = 1.0; PRODUCT_BUNDLE_IDENTIFIER = io.damao.CodexUsageMonitor; PRODUCT_MODULE_NAME = CodexUsageMonitor; PRODUCT_NAME = "Codex Usage Monitor"; SWIFT_EMIT_LOC_STRINGS = YES; SWIFT_VERSION = 5.0;}; name = Release; };
+		I20000000000000000000001 = {isa = XCBuildConfiguration; buildSettings = {BUNDLE_LOADER = "$(TEST_HOST)"; CODE_SIGN_STYLE = Automatic; GENERATE_INFOPLIST_FILE = YES; MACOSX_DEPLOYMENT_TARGET = 14.0; ONLY_ACTIVE_ARCH = YES; PRODUCT_BUNDLE_IDENTIFIER = io.damao.CodexUsageMonitorTests; PRODUCT_NAME = "$(TARGET_NAME)"; SWIFT_OPTIMIZATION_LEVEL = "-Onone"; SWIFT_VERSION = 5.0; TEST_HOST = "$(BUILT_PRODUCTS_DIR)/Codex Usage Monitor.app/Contents/MacOS/Codex Usage Monitor";}; name = Debug; };
+		I20000000000000000000002 = {isa = XCBuildConfiguration; buildSettings = {BUNDLE_LOADER = "$(TEST_HOST)"; CODE_SIGN_STYLE = Automatic; GENERATE_INFOPLIST_FILE = YES; MACOSX_DEPLOYMENT_TARGET = 14.0; PRODUCT_BUNDLE_IDENTIFIER = io.damao.CodexUsageMonitorTests; PRODUCT_NAME = "$(TARGET_NAME)"; SWIFT_VERSION = 5.0; TEST_HOST = "$(BUILT_PRODUCTS_DIR)/Codex Usage Monitor.app/Contents/MacOS/Codex Usage Monitor";}; name = Release; };
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		H00000000000000000000001 = {isa = XCConfigurationList; buildConfigurations = (I00000000000000000000001, I00000000000000000000002); defaultConfigurationIsVisible = 0; defaultConfigurationName = Release; };
+		H10000000000000000000001 = {isa = XCConfigurationList; buildConfigurations = (I10000000000000000000001, I10000000000000000000002); defaultConfigurationIsVisible = 0; defaultConfigurationName = Release; };
+		H20000000000000000000001 = {isa = XCConfigurationList; buildConfigurations = (I20000000000000000000001, I20000000000000000000002); defaultConfigurationIsVisible = 0; defaultConfigurationName = Release; };
+/* End XCConfigurationList section */
+	};
+	rootObject = D00000000000000000000001 /* Project object */;
+}
