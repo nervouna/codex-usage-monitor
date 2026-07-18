@@ -20,15 +20,63 @@ final class QuotaNotificationTests: XCTestCase {
         XCTAssertEqual(persistence.state?.lowQuotaNotifiedResetsAt, 200)
     }
 
-    func testCycleAdvanceTriggersResetOnceEvenWhenExactHundredWasMissed() {
+    func testNinetyNineToHundredTriggersReset() {
+        let persistence = MemoryObservationStore(state: .init(lastRemainingPercent: 99, lastResetsAt: 100))
+        let tracker = QuotaNotificationTracker(persistence: persistence)
+
+        XCTAssertEqual(
+            tracker.observe(remainingPercent: 100, resetsAt: 200, sevenDayTokens: 123),
+            .reset(currentRemaining: 100, nextResetAt: 200, sevenDayTokens: 123)
+        )
+    }
+
+    func testTwentyFiveToHundredTriggersReset() {
         let persistence = MemoryObservationStore(state: .init(lastRemainingPercent: 25, lastResetsAt: 100))
         let tracker = QuotaNotificationTracker(persistence: persistence)
 
         XCTAssertEqual(
-            tracker.observe(remainingPercent: 96, resetsAt: 200, sevenDayTokens: 123),
-            .reset(currentRemaining: 96, nextResetAt: 200, sevenDayTokens: 123)
+            tracker.observe(remainingPercent: 100, resetsAt: 200, sevenDayTokens: 123),
+            .reset(currentRemaining: 100, nextResetAt: 200, sevenDayTokens: 123)
         )
-        XCTAssertNil(tracker.observe(remainingPercent: 95, resetsAt: 200, sevenDayTokens: 123))
+    }
+
+    func testRepeatedHundredDoesNotNotifyAndTracksLatestResetTime() {
+        let persistence = MemoryObservationStore(state: .init(lastRemainingPercent: 100, lastResetsAt: 100))
+        let tracker = QuotaNotificationTracker(persistence: persistence)
+
+        XCTAssertNil(tracker.observe(remainingPercent: 100, resetsAt: 200, sevenDayTokens: 123))
+        XCTAssertEqual(persistence.state?.lastResetsAt, 200)
+        XCTAssertNil(tracker.observe(remainingPercent: 100, resetsAt: 300, sevenDayTokens: 123))
+        XCTAssertEqual(persistence.state?.lastResetsAt, 300)
+    }
+
+    func testLeavingHundredDoesNotNotify() {
+        let persistence = MemoryObservationStore(state: .init(lastRemainingPercent: 100, lastResetsAt: 200))
+        let tracker = QuotaNotificationTracker(persistence: persistence)
+
+        XCTAssertNil(tracker.observe(remainingPercent: 99, resetsAt: 200, sevenDayTokens: 123))
+    }
+
+    func testResetTimeAdvanceWithoutHundredDoesNotNotify() {
+        let persistence = MemoryObservationStore(state: .init(lastRemainingPercent: 25, lastResetsAt: 100))
+        let tracker = QuotaNotificationTracker(persistence: persistence)
+
+        XCTAssertNil(tracker.observe(remainingPercent: 96, resetsAt: 200, sevenDayTokens: 123))
+        XCTAssertEqual(
+            persistence.state,
+            QuotaObservationState(lastRemainingPercent: 96, lastResetsAt: 200)
+        )
+    }
+
+    func testResetTimeRegressionWithoutHundredDoesNotNotify() {
+        let persistence = MemoryObservationStore(state: .init(lastRemainingPercent: 25, lastResetsAt: 200))
+        let tracker = QuotaNotificationTracker(persistence: persistence)
+
+        XCTAssertNil(tracker.observe(remainingPercent: 24, resetsAt: 150, sevenDayTokens: 123))
+        XCTAssertEqual(
+            persistence.state,
+            QuotaObservationState(lastRemainingPercent: 24, lastResetsAt: 150)
+        )
     }
 
     func testLowQuotaCrossingTriggersOncePerCycle() {
@@ -42,14 +90,11 @@ final class QuotaNotificationTests: XCTestCase {
         XCTAssertNil(tracker.observe(remainingPercent: 10, resetsAt: 200, sevenDayTokens: 0))
     }
 
-    func testResetAtLowQuotaProducesOnlyResetAndMarksLowHandled() {
+    func testResetTimeAdvanceAtLowQuotaDoesNotNotifyAndMarksLowHandled() {
         let persistence = MemoryObservationStore(state: .init(lastRemainingPercent: 5, lastResetsAt: 100))
         let tracker = QuotaNotificationTracker(persistence: persistence)
 
-        XCTAssertEqual(
-            tracker.observe(remainingPercent: 19, resetsAt: 200, sevenDayTokens: 99),
-            .reset(currentRemaining: 19, nextResetAt: 200, sevenDayTokens: 99)
-        )
+        XCTAssertNil(tracker.observe(remainingPercent: 19, resetsAt: 200, sevenDayTokens: 99))
         XCTAssertEqual(persistence.state?.lowQuotaNotifiedResetsAt, 200)
         XCTAssertNil(tracker.observe(remainingPercent: 18, resetsAt: 200, sevenDayTokens: 99))
     }

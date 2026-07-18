@@ -176,20 +176,30 @@ public struct QuotaNotificationTracker {
             return nil
         }
 
-        var event: QuotaNotificationEvent?
-        if resetsAt > previous.lastResetsAt {
+        let didReset = previous.lastRemainingPercent != 100 && remaining == 100
+        let didCrossLowQuotaThreshold = !didReset
+            && resetsAt == previous.lastResetsAt
+            && previous.lastRemainingPercent > 20
+            && remaining <= 20
+            && previous.lowQuotaNotifiedResetsAt != resetsAt
+
+        let event: QuotaNotificationEvent?
+        if didReset {
             event = .reset(currentRemaining: remaining, nextResetAt: resetsAt, sevenDayTokens: sevenDayTokens)
-            previous.lastResetsAt = resetsAt
-            previous.lowQuotaNotifiedResetsAt = remaining <= 20 ? resetsAt : nil
-        } else if resetsAt == previous.lastResetsAt,
-                  previous.lastRemainingPercent > 20,
-                  remaining <= 20,
-                  previous.lowQuotaNotifiedResetsAt != resetsAt {
+        } else if didCrossLowQuotaThreshold {
             event = .lowQuota(currentRemaining: remaining, resetAt: resetsAt)
+        } else {
+            event = nil
+        }
+
+        if resetsAt != previous.lastResetsAt {
+            previous.lowQuotaNotifiedResetsAt = remaining <= 20 ? resetsAt : nil
+        } else if didCrossLowQuotaThreshold {
             previous.lowQuotaNotifiedResetsAt = resetsAt
         }
 
         previous.lastRemainingPercent = remaining
+        previous.lastResetsAt = resetsAt
         persistence.save(previous)
         return event
     }
