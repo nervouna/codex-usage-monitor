@@ -50,3 +50,40 @@ xcodebuild \
 ```
 
 开机启动需要从 `.app` 包运行；直接运行内部可执行文件时，系统可能拒绝注册登录项。
+
+## 打包
+
+统一使用 `scripts/package.sh` 生成 Release universal ZIP。先运行 `--dry-run` 查看 Git 门禁、当前和下一个 build number、产物路径及外部操作；dry run 不修改文件、不提交、不推送，也不上传公证请求。
+
+```bash
+./scripts/package.sh adhoc --dry-run
+./scripts/package.sh signed --dry-run
+NOTARYTOOL_PROFILE=codex-usage-monitor ./scripts/package.sh notarized --dry-run
+```
+
+确认预检信息后，再执行对应命令：
+
+```bash
+./scripts/package.sh adhoc
+./scripts/package.sh signed
+NOTARYTOOL_PROFILE=codex-usage-monitor \
+  ./scripts/package.sh notarized --confirm-publish
+```
+
+- `adhoc`：使用 ad hoc 签名，适合本机验证。允许脏工作区，会把未提交内容打入 App；build number 修改保留在工作区，不自动提交。
+- `signed`：使用 Developer ID Application 签名，适合分享试用，但不代表已通过 Gatekeeper 公证。要求工作区完全干净；测试通过后只提交 build-number 修改，不自动 push。只有一个可用身份时自动选择；有多个身份时，通过 `DEVELOPER_ID_APPLICATION` 和可选的 `DEVELOPMENT_TEAM` 显式指定。
+- `notarized`：用于正式发布。要求工作区完全干净、当前分支为 `main`，且开始时本地 `main` 与最新 `origin/main` 完全一致。脚本测试通过后提交 build-number 修改并 push，再提交 Apple 公证、装订 ticket 并通过 Gatekeeper 验证。正式执行必须显式提供 `--confirm-publish`。
+
+`signed` 和 `notarized` 会在 build 自增前运行完整 XCTest；测试失败不会消耗 build number。build 提交一旦创建，即使后续构建或公证失败也会保留，不应回滚或复用。脚本不会创建 Git tag、GitHub Release，也不会修改 marketing version。
+
+公证凭据只应保存在 Keychain 中。可以在本机交互式创建 profile，不能把 Apple ID 密码或 app-specific password 写入仓库：
+
+```bash
+xcrun notarytool store-credentials codex-usage-monitor
+```
+
+构建中间文件只写入 `.build/staging/`。所有验证通过后，最终 ZIP 才会移动到 `.build/releases/`，文件名格式为：
+
+```text
+Codex-Usage-Monitor-macOS-universal-<adhoc|signed|notarized>-YYYY-MM-DD-build-N.zip
+```

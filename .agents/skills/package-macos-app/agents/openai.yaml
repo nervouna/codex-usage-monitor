@@ -1,0 +1,4 @@
+interface:
+  display_name: "Package macOS App"
+  short_description: "Build, sign, and notarize macOS release packages"
+  default_prompt: "Use $package-macos-app to package this macOS app with the required Git, signing, and notarization gates."
