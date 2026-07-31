@@ -21,6 +21,9 @@ private struct MenuBarLabel: View {
     @ObservedObject var store: UsageStore
 
     var body: some View {
-        Label(store.menuBarTitle, systemImage: store.menuBarSymbol)
+        HStack(spacing: 4) {
+            Image(systemName: store.menuBarSymbol)
+            Text(store.menuBarTitle)
+        }
     }
 }
