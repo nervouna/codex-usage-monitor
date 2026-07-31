@@ -13,7 +13,7 @@ final class UsageStoreTests: XCTestCase {
 
         await store.refresh()
 
-        XCTAssertEqual(store.menuBarTitle, "周 73%")
+        XCTAssertEqual(store.menuBarTitle, "73%")
     }
 
     func testRefreshSuccessThenFailureKeepsLastSnapshot() async {

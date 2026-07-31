@@ -51,7 +51,7 @@ public final class UsageStore: ObservableObject {
     deinit { refreshLoop?.cancel() }
 
     public var menuBarTitle: String {
-        if let remaining = snapshot?.primaryLimit.weeklyRemainingPercent { return "周 \(remaining)%" }
+        if let remaining = snapshot?.primaryLimit.weeklyRemainingPercent { return "\(remaining)%" }
         return isRefreshing ? "…" : "--%"
     }
 
