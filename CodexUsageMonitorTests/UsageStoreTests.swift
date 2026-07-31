@@ -4,6 +4,18 @@ import XCTest
 
 @MainActor
 final class UsageStoreTests: XCTestCase {
+    func testMenuBarTitleUsesWeeklyWindow() async {
+        let store = makeStore(
+            fetcher: StaticFetcher(snapshot: Self.snapshot(usedPercent: 80, weeklyUsedPercent: 27))
+        )
+
+        XCTAssertEqual(store.menuBarTitle, "--%")
+
+        await store.refresh()
+
+        XCTAssertEqual(store.menuBarTitle, "周 73%")
+    }
+
     func testRefreshSuccessThenFailureKeepsLastSnapshot() async {
         let snapshot = Self.snapshot()
         let fetcher = SequenceFetcher(results: [.success(snapshot), .failure(CodexUsageError.timedOut)])
@@ -116,13 +128,21 @@ final class UsageStoreTests: XCTestCase {
 
     private static func snapshot(
         usedPercent: Int = 25,
+        weeklyUsedPercent: Int? = nil,
         resetsAt: Int64? = 200,
         dailyUsageBuckets: [DailyUsageBucket] = []
     ) -> UsageSnapshot {
         UsageSnapshot(
             primaryLimit: RateLimitSnapshot(
                 limitId: "codex",
-                primary: RateLimitWindow(usedPercent: usedPercent, resetsAt: resetsAt)
+                primary: RateLimitWindow(
+                    usedPercent: usedPercent,
+                    windowDurationMins: weeklyUsedPercent == nil ? 10_080 : 300,
+                    resetsAt: resetsAt
+                ),
+                secondary: weeklyUsedPercent.map {
+                    RateLimitWindow(usedPercent: $0, windowDurationMins: 10_080, resetsAt: resetsAt)
+                }
             ),
             dailyUsageBuckets: dailyUsageBuckets,
             lifetimeTokens: 10,

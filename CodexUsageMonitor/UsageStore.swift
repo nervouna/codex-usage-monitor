@@ -51,12 +51,12 @@ public final class UsageStore: ObservableObject {
     deinit { refreshLoop?.cancel() }
 
     public var menuBarTitle: String {
-        if let remaining = snapshot?.primaryLimit.remainingPercent { return "\(remaining)%" }
+        if let remaining = snapshot?.primaryLimit.weeklyRemainingPercent { return "周 \(remaining)%" }
         return isRefreshing ? "…" : "--%"
     }
 
     public var menuBarSymbol: String {
-        guard let remaining = snapshot?.primaryLimit.remainingPercent else { return "gauge.with.dots.needle.33percent" }
+        guard let remaining = snapshot?.primaryLimit.weeklyRemainingPercent else { return "gauge.with.dots.needle.33percent" }
         if remaining <= 10 { return "exclamationmark.triangle.fill" }
         if remaining <= 30 { return "gauge.with.dots.needle.33percent" }
         return "gauge.with.dots.needle.67percent"
@@ -95,8 +95,8 @@ public final class UsageStore: ObservableObject {
             let newSnapshot = try await fetcher.fetchSnapshot()
             let newStatistics = UsageStatistics.calculate(buckets: newSnapshot.dailyUsageBuckets, now: now())
             let notificationEvent = notificationTracker.observe(
-                remainingPercent: newSnapshot.primaryLimit.remainingPercent ?? 0,
-                resetsAt: newSnapshot.primaryLimit.primary?.resetsAt,
+                remainingPercent: newSnapshot.primaryLimit.weeklyRemainingPercent ?? 0,
+                resetsAt: newSnapshot.primaryLimit.weeklyWindow?.resetsAt,
                 sevenDayTokens: newStatistics.sevenDayTotal
             )
             snapshot = newSnapshot

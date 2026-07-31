@@ -11,16 +11,16 @@ final class CodexAppServerClientTests: XCTestCase {
         let snapshot = try await CodexAppServerClient(timeout: 15).fetchSnapshot()
 
         XCTAssertEqual(snapshot.primaryLimit.limitId, "codex")
-        XCTAssertNotNil(snapshot.primaryLimit.remainingPercent)
+        XCTAssertNotNil(snapshot.primaryLimit.weeklyRemainingPercent)
         XCTAssertNotNil(snapshot.lifetimeTokens)
-        print("LIVE_CODEX remaining=\(snapshot.primaryLimit.remainingPercent ?? -1) lifetime=\(snapshot.lifetimeTokens ?? -1) dailyBuckets=\(snapshot.dailyUsageBuckets.count)")
+        print("LIVE_CODEX weeklyRemaining=\(snapshot.primaryLimit.weeklyRemainingPercent ?? -1) lifetime=\(snapshot.lifetimeTokens ?? -1) dailyBuckets=\(snapshot.dailyUsageBuckets.count)")
     }
 
     func testParsesOutOfOrderResponsesAndIgnoresNotifications() async throws {
         let lines = [
             #"{"method":"account/rateLimits/updated","params":{}}"#,
             #"{"id":3,"result":{"summary":{"lifetimeTokens":123456},"dailyUsageBuckets":[{"startDate":"2026-07-15","tokens":42}]}}"#,
-            #"{"id":2,"result":{"rateLimits":{"limitId":"codex","limitName":null,"primary":{"usedPercent":27,"windowDurationMins":10080,"resetsAt":1784787454}},"rateLimitsByLimitId":{"spark":{"limitId":"spark","limitName":"Spark","primary":{"usedPercent":10,"windowDurationMins":10080,"resetsAt":1784787454}},"codex":{"limitId":"codex","limitName":null,"primary":{"usedPercent":27,"windowDurationMins":10080,"resetsAt":1784787454}}}}}"#
+            #"{"id":2,"result":{"rateLimits":{"limitId":"codex","limitName":null,"primary":{"usedPercent":80,"windowDurationMins":300,"resetsAt":1784701054},"secondary":{"usedPercent":27,"windowDurationMins":10080,"resetsAt":1784787454}},"rateLimitsByLimitId":{"spark":{"limitId":"spark","limitName":"Spark","primary":{"usedPercent":10,"windowDurationMins":10080,"resetsAt":1784787454}},"codex":{"limitId":"codex","limitName":null,"primary":{"usedPercent":80,"windowDurationMins":300,"resetsAt":1784701054},"secondary":{"usedPercent":27,"windowDurationMins":10080,"resetsAt":1784787454}}}}}"#
         ].map { Data($0.utf8) }
         let client = CodexAppServerClient(
             executor: FakeExecutor(result: AppServerExchangeResult(stdoutLines: lines)),
@@ -29,7 +29,8 @@ final class CodexAppServerClientTests: XCTestCase {
 
         let snapshot = try await client.fetchSnapshot()
 
-        XCTAssertEqual(snapshot.primaryLimit.remainingPercent, 73)
+        XCTAssertEqual(snapshot.primaryLimit.remainingPercent, 20)
+        XCTAssertEqual(snapshot.primaryLimit.weeklyRemainingPercent, 73)
         XCTAssertEqual(snapshot.otherLimits.map(\.displayName), ["Spark"])
         XCTAssertEqual(snapshot.lifetimeTokens, 123456)
         XCTAssertEqual(snapshot.dailyUsageBuckets.first?.tokens, 42)

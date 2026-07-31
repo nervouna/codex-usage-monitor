@@ -13,23 +13,43 @@ public struct RateLimitWindow: Codable, Equatable, Sendable {
 }
 
 public struct RateLimitSnapshot: Codable, Equatable, Sendable, Identifiable {
+    private static let weeklyWindowDurationMins: Int64 = 7 * 24 * 60
+
     public let limitId: String?
     public let limitName: String?
     public let primary: RateLimitWindow?
+    public let secondary: RateLimitWindow?
 
     public var id: String { limitId ?? limitName ?? "unknown" }
     public var displayName: String { limitName ?? (limitId == "codex" ? "Codex" : limitId ?? "其他额度") }
     public var remainingPercent: Int? {
         primary.map { min(100, max(0, 100 - $0.usedPercent)) }
     }
+    public var weeklyWindow: RateLimitWindow? {
+        [primary, secondary]
+            .compactMap { $0 }
+            .first { $0.windowDurationMins == Self.weeklyWindowDurationMins }
+    }
+    public var weeklyRemainingPercent: Int? {
+        weeklyWindow.map { min(100, max(0, 100 - $0.usedPercent)) }
+    }
     public var resetDate: Date? {
         primary?.resetsAt.map { Date(timeIntervalSince1970: TimeInterval($0)) }
     }
+    public var weeklyResetDate: Date? {
+        weeklyWindow?.resetsAt.map { Date(timeIntervalSince1970: TimeInterval($0)) }
+    }
 
-    public init(limitId: String?, limitName: String? = nil, primary: RateLimitWindow?) {
+    public init(
+        limitId: String?,
+        limitName: String? = nil,
+        primary: RateLimitWindow?,
+        secondary: RateLimitWindow? = nil
+    ) {
         self.limitId = limitId
         self.limitName = limitName
         self.primary = primary
+        self.secondary = secondary
     }
 }
 

@@ -99,8 +99,8 @@ public struct CodexAppServerClient: UsageFetching, Sendable {
 
         let allLimits = rateResponse.rateLimitsByLimitId.map { Array($0.values) } ?? [rateResponse.rateLimits]
         guard let primary = allLimits.first(where: { $0.limitId == "codex" }) ?? (rateResponse.rateLimits.limitId == "codex" ? rateResponse.rateLimits : nil),
-              primary.primary != nil else {
-            throw CodexUsageError.protocolChanged("缺少标准 codex 额度桶")
+              primary.weeklyWindow != nil else {
+            throw CodexUsageError.protocolChanged("缺少标准 codex 周额度桶")
         }
 
         let otherLimits = allLimits

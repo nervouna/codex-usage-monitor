@@ -41,7 +41,7 @@ struct UsageMenuView: View {
                         .foregroundStyle(.secondary)
                 }
                 Spacer()
-                if let remaining = store.snapshot?.primaryLimit.remainingPercent {
+                if let remaining = store.snapshot?.primaryLimit.weeklyRemainingPercent {
                     Text("\(remaining)%")
                         .font(.system(size: 30, weight: .semibold, design: .rounded))
                     Text("剩余")
@@ -53,10 +53,10 @@ struct UsageMenuView: View {
                 }
             }
 
-            if let remaining = store.snapshot?.primaryLimit.remainingPercent {
+            if let remaining = store.snapshot?.primaryLimit.weeklyRemainingPercent {
                 ProgressView(value: Double(remaining), total: 100)
                     .tint(color(for: remaining))
-                if let resetDate = store.snapshot?.primaryLimit.resetDate {
+                if let resetDate = store.snapshot?.primaryLimit.weeklyResetDate {
                     Text("重置时间：\(resetDate.formatted(date: .abbreviated, time: .shortened))")
                         .font(.caption)
                         .foregroundStyle(.secondary)
