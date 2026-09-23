@@ -1,3 +1,4 @@
+import AppKit
 import SwiftUI
 
 struct UsageMenuView: View {
@@ -180,6 +181,8 @@ struct UsageMenuView: View {
                 set: { store.setLaunchAtLogin($0) }
             ))
 
+            codexHomeSection
+
             HStack {
                 if let date = store.snapshot?.fetchedAt {
                     Text("更新于 \(date.formatted(date: .omitted, time: .shortened))")
@@ -201,6 +204,52 @@ struct UsageMenuView: View {
                 Button("退出") { store.quit() }
             }
         }
+    }
+
+    private var codexHomeSection: some View {
+        VStack(alignment: .leading, spacing: 4) {
+            HStack(spacing: 8) {
+                Text("Codex 数据目录")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+                Spacer()
+                Button("选择…", action: chooseCodexHomeDirectory)
+                    .font(.caption)
+                if store.hasCodexHomeOverride {
+                    Button("自动检测") { store.resetCodexHomeDirectory() }
+                        .font(.caption)
+                }
+            }
+
+            Text(store.codexHomePath ?? "检测到多个目录，请选择一个")
+                .font(.caption2)
+                .foregroundStyle(.secondary)
+                .lineLimit(1)
+                .truncationMode(.middle)
+                .help(store.codexHomePath ?? "")
+
+            if let error = store.codexHomeErrorMessage {
+                Text(error)
+                    .font(.caption2)
+                    .foregroundStyle(.orange)
+            }
+        }
+    }
+
+    private func chooseCodexHomeDirectory() {
+        let panel = NSOpenPanel()
+        panel.title = "选择 Codex 数据目录"
+        panel.message = "选择包含 Codex 登录状态的目录。登录凭据不会被复制。"
+        panel.prompt = "选择"
+        panel.canChooseFiles = false
+        panel.canChooseDirectories = true
+        panel.allowsMultipleSelection = false
+        if let path = store.codexHomePath {
+            panel.directoryURL = URL(fileURLWithPath: path)
+        }
+
+        guard panel.runModal() == .OK, let url = panel.url else { return }
+        store.setCodexHomeDirectory(url)
     }
 
     private func color(for remaining: Int) -> Color {

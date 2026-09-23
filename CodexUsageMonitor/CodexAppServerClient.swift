@@ -26,6 +26,7 @@ public enum CodexUsageError: LocalizedError, Equatable, Sendable {
     case timedOut
     case processFailed(String)
     case notLoggedIn
+    case codexHomeSelectionRequired
     case protocolChanged(String)
 
     public var errorDescription: String? {
@@ -40,6 +41,8 @@ public enum CodexUsageError: LocalizedError, Equatable, Sendable {
             return "Codex 返回错误：\(message)"
         case .notLoggedIn:
             return "Codex 尚未登录 ChatGPT 账号。"
+        case .codexHomeSelectionRequired:
+            return "检测到多个 Codex 登录目录，请在设置中选择一个。"
         case .protocolChanged(let message):
             return "Codex 用量协议可能已变化：\(message)"
         }
@@ -126,7 +129,11 @@ public struct SubprocessAppServerExecutor: AppServerProcessExecuting, Sendable {
     public init() {}
 
     public func exchange(executableURL: URL, timeout: TimeInterval) async throws -> AppServerExchangeResult {
-        try await withCheckedThrowingContinuation { continuation in
+        guard !CodexHomeLocator.requiresManualSelection() else {
+            throw CodexUsageError.codexHomeSelectionRequired
+        }
+
+        return try await withCheckedThrowingContinuation { continuation in
             DispatchQueue.global(qos: .userInitiated).async {
                 let process = Process()
                 let stdinPipe = Pipe()
@@ -137,6 +144,11 @@ public struct SubprocessAppServerExecutor: AppServerProcessExecuting, Sendable {
                 process.standardInput = stdinPipe
                 process.standardOutput = stdoutPipe
                 process.standardError = stderrPipe
+                var environment = ProcessInfo.processInfo.environment
+                if let codexHome = CodexHomeLocator.resolve()?.path {
+                    environment["CODEX_HOME"] = codexHome
+                }
+                process.environment = environment
 
                 let timeoutState = TimeoutState()
                 let timer = DispatchWorkItem {
@@ -256,6 +268,57 @@ public enum CodexExecutableLocator {
         return candidates
             .map(URL.init(fileURLWithPath:))
             .first { fileManager.isExecutableFile(atPath: $0.path) }
+    }
+}
+
+enum CodexHomeLocator {
+    static let overridePreferenceKey = "codexHomePathOverride"
+
+    static func resolve(
+        environment: [String: String] = ProcessInfo.processInfo.environment,
+        preferences: UserDefaults = .standard,
+        fileManager: FileManager = .default
+    ) -> URL? {
+        if let explicitHome = explicitHome(environment: environment, preferences: preferences) {
+            return explicitHome
+        }
+
+        let authenticatedHomes = authenticatedHomes(fileManager: fileManager)
+        guard authenticatedHomes.count <= 1 else { return nil }
+        return authenticatedHomes.first ?? candidates(fileManager: fileManager).last
+    }
+
+    static func requiresManualSelection(
+        environment: [String: String] = ProcessInfo.processInfo.environment,
+        preferences: UserDefaults = .standard,
+        fileManager: FileManager = .default
+    ) -> Bool {
+        guard explicitHome(environment: environment, preferences: preferences) == nil else { return false }
+        return authenticatedHomes(fileManager: fileManager).count > 1
+    }
+
+    private static func explicitHome(environment: [String: String], preferences: UserDefaults) -> URL? {
+        if let override = preferences.string(forKey: overridePreferenceKey), !override.isEmpty {
+            return URL(fileURLWithPath: (override as NSString).expandingTildeInPath).standardizedFileURL
+        }
+        if let configured = environment["CODEX_HOME"], !configured.isEmpty {
+            return URL(fileURLWithPath: (configured as NSString).expandingTildeInPath).standardizedFileURL
+        }
+        return nil
+    }
+
+    private static func candidates(fileManager: FileManager) -> [URL] {
+        let home = fileManager.homeDirectoryForCurrentUser
+        return [
+            home.appending(path: "Library/Application Support/Codex/home"),
+            home.appending(path: ".codex")
+        ]
+    }
+
+    private static func authenticatedHomes(fileManager: FileManager) -> [URL] {
+        candidates(fileManager: fileManager).filter { candidate in
+            fileManager.fileExists(atPath: candidate.appending(path: "auth.json").path)
+        }
     }
 }
 

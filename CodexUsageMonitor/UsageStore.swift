@@ -19,6 +19,8 @@ public final class UsageStore: ObservableObject {
     @Published public private(set) var notificationsEnabled: Bool
     @Published public private(set) var notificationAuthorizationStatus: QuotaNotificationAuthorizationStatus = .notDetermined
     @Published public private(set) var notificationErrorMessage: String?
+    @Published public private(set) var codexHomePath: String?
+    @Published public private(set) var codexHomeErrorMessage: String?
 
     private let fetcher: any UsageFetching
     private let now: @Sendable () -> Date
@@ -26,6 +28,7 @@ public final class UsageStore: ObservableObject {
     private let notificationTracker: QuotaNotificationTracker
     private let preferences: UserDefaults
     private var refreshLoop: Task<Void, Never>?
+    private var refreshPending = false
 
     private static let notificationsEnabledKey = "quotaNotificationsEnabled"
     private static let notificationPromptedKey = "quotaNotificationPermissionPrompted"
@@ -44,6 +47,9 @@ public final class UsageStore: ObservableObject {
         self.notificationTracker = QuotaNotificationTracker(
             persistence: observationPersistence ?? UserDefaultsQuotaObservationStore(defaults: preferences)
         )
+        let needsCodexHomeSelection = CodexHomeLocator.requiresManualSelection(preferences: preferences)
+        self.codexHomePath = CodexHomeLocator.resolve(preferences: preferences)?.path
+        self.codexHomeErrorMessage = needsCodexHomeSelection ? "检测到多个 Codex 登录目录，请选择一个。" : nil
         self.launchAtLogin = SMAppService.mainApp.status == .enabled
         self.notificationsEnabled = preferences.object(forKey: Self.notificationsEnabledKey) as? Bool ?? true
     }
@@ -60,6 +66,11 @@ public final class UsageStore: ObservableObject {
         if remaining <= 10 { return "exclamationmark.triangle.fill" }
         if remaining <= 30 { return "gauge.with.dots.needle.33percent" }
         return "gauge.with.dots.needle.67percent"
+    }
+
+    public var hasCodexHomeOverride: Bool {
+        guard let path = preferences.string(forKey: CodexHomeLocator.overridePreferenceKey) else { return false }
+        return !path.isEmpty
     }
 
     public func start() {
@@ -87,9 +98,18 @@ public final class UsageStore: ObservableObject {
     }
 
     public func refresh() async {
-        guard !isRefreshing else { return }
+        guard !isRefreshing else {
+            refreshPending = true
+            return
+        }
         isRefreshing = true
-        defer { isRefreshing = false }
+        defer {
+            isRefreshing = false
+            if refreshPending {
+                refreshPending = false
+                Task { await refresh() }
+            }
+        }
 
         do {
             let newSnapshot = try await fetcher.fetchSnapshot()
@@ -142,6 +162,28 @@ public final class UsageStore: ObservableObject {
     public func openNotificationSettings() {
         guard let url = URL(string: "x-apple.systempreferences:com.apple.Notifications-Settings.extension") else { return }
         NSWorkspace.shared.open(url)
+    }
+
+    public func setCodexHomeDirectory(_ url: URL) {
+        let directoryURL = url.standardizedFileURL
+        var isDirectory = ObjCBool(false)
+        guard FileManager.default.fileExists(atPath: directoryURL.path, isDirectory: &isDirectory), isDirectory.boolValue else {
+            codexHomeErrorMessage = "所选目录不可用。"
+            return
+        }
+
+        preferences.set(directoryURL.path, forKey: CodexHomeLocator.overridePreferenceKey)
+        codexHomePath = directoryURL.path
+        codexHomeErrorMessage = nil
+        Task { await refresh() }
+    }
+
+    public func resetCodexHomeDirectory() {
+        preferences.removeObject(forKey: CodexHomeLocator.overridePreferenceKey)
+        let needsSelection = CodexHomeLocator.requiresManualSelection(preferences: preferences)
+        codexHomePath = CodexHomeLocator.resolve(preferences: preferences)?.path
+        codexHomeErrorMessage = needsSelection ? "检测到多个 Codex 登录目录，请选择一个。" : nil
+        Task { await refresh() }
     }
 
     private func deliverNotificationIfAllowed(_ event: QuotaNotificationEvent) async {
