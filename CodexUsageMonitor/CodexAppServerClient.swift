@@ -129,12 +129,12 @@ public struct SubprocessAppServerExecutor: AppServerProcessExecuting, Sendable {
     public init() {}
 
     public func exchange(executableURL: URL, timeout: TimeInterval) async throws -> AppServerExchangeResult {
-        guard !CodexHomeLocator.requiresManualSelection() else {
-            throw CodexUsageError.codexHomeSelectionRequired
-        }
-
         return try await withCheckedThrowingContinuation { continuation in
             DispatchQueue.global(qos: .userInitiated).async {
+                guard let codexHome = CodexHomeLocator.resolve() else {
+                    continuation.resume(throwing: CodexUsageError.codexHomeSelectionRequired)
+                    return
+                }
                 let process = Process()
                 let stdinPipe = Pipe()
                 let stdoutPipe = Pipe()
@@ -145,9 +145,7 @@ public struct SubprocessAppServerExecutor: AppServerProcessExecuting, Sendable {
                 process.standardOutput = stdoutPipe
                 process.standardError = stderrPipe
                 var environment = ProcessInfo.processInfo.environment
-                if let codexHome = CodexHomeLocator.resolve()?.path {
-                    environment["CODEX_HOME"] = codexHome
-                }
+                environment["CODEX_HOME"] = codexHome.path
                 process.environment = environment
 
                 let timeoutState = TimeoutState()
@@ -288,15 +286,6 @@ enum CodexHomeLocator {
         return authenticatedHomes.first ?? candidates(fileManager: fileManager).last
     }
 
-    static func requiresManualSelection(
-        environment: [String: String] = ProcessInfo.processInfo.environment,
-        preferences: UserDefaults = .standard,
-        fileManager: FileManager = .default
-    ) -> Bool {
-        guard explicitHome(environment: environment, preferences: preferences) == nil else { return false }
-        return authenticatedHomes(fileManager: fileManager).count > 1
-    }
-
     private static func explicitHome(environment: [String: String], preferences: UserDefaults) -> URL? {
         if let override = preferences.string(forKey: overridePreferenceKey), !override.isEmpty {
             return URL(fileURLWithPath: (override as NSString).expandingTildeInPath).standardizedFileURL
@@ -304,7 +293,47 @@ enum CodexHomeLocator {
         if let configured = environment["CODEX_HOME"], !configured.isEmpty {
             return URL(fileURLWithPath: (configured as NSString).expandingTildeInPath).standardizedFileURL
         }
+        if let configured = loginShellHome(environment: environment) {
+            return URL(fileURLWithPath: (configured as NSString).expandingTildeInPath).standardizedFileURL
+        }
         return nil
+    }
+
+    private static func loginShellHome(environment: [String: String]) -> String? {
+        // GUI launches do not source shell startup files. Ask the user's shell
+        // instead of parsing scripts or assuming a fixed configuration location.
+        let shell = environment["SHELL"] ?? getpwuid(getuid()).map { String(cString: $0.pointee.pw_shell) } ?? "/bin/zsh"
+        let directory = FileManager.default.temporaryDirectory.appending(path: UUID().uuidString)
+        do {
+            try FileManager.default.createDirectory(
+                at: directory, withIntermediateDirectories: true, attributes: [.posixPermissions: 0o700]
+            )
+        } catch { return nil }
+        defer { try? FileManager.default.removeItem(at: directory) }
+        let output = directory.appending(path: "home")
+        let process = Process()
+        process.executableURL = URL(fileURLWithPath: shell)
+        process.arguments = ["-ilc", #"/usr/bin/printenv CODEX_HOME > "$CODEX_USAGE_HOME_RESULT""#]
+        var shellEnvironment = environment
+        shellEnvironment["CODEX_USAGE_HOME_RESULT"] = output.path
+        process.environment = shellEnvironment
+        process.currentDirectoryURL = FileManager.default.homeDirectoryForCurrentUser
+        process.standardInput = FileHandle.nullDevice
+        process.standardOutput = FileHandle.nullDevice
+        process.standardError = FileHandle.nullDevice
+        let finished = DispatchSemaphore(value: 0)
+        process.terminationHandler = { _ in finished.signal() }
+        do { try process.run() } catch { return nil }
+        guard finished.wait(timeout: .now() + 2) == .success else {
+            if process.isRunning { kill(process.processIdentifier, SIGKILL) }
+            process.waitUntilExit()
+            return nil
+        }
+        guard process.terminationStatus == 0,
+              var value = try? String(contentsOf: output, encoding: .utf8) else { return nil }
+        // printenv adds one newline; preserve spaces in the configured path.
+        if value.hasSuffix("\n") { value.removeLast() }
+        return value.isEmpty ? nil : value
     }
 
     private static func candidates(fileManager: FileManager) -> [URL] {

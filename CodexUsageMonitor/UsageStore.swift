@@ -47,9 +47,9 @@ public final class UsageStore: ObservableObject {
         self.notificationTracker = QuotaNotificationTracker(
             persistence: observationPersistence ?? UserDefaultsQuotaObservationStore(defaults: preferences)
         )
-        let needsCodexHomeSelection = CodexHomeLocator.requiresManualSelection(preferences: preferences)
-        self.codexHomePath = CodexHomeLocator.resolve(preferences: preferences)?.path
-        self.codexHomeErrorMessage = needsCodexHomeSelection ? "检测到多个 Codex 登录目录，请选择一个。" : nil
+        let codexHome = CodexHomeLocator.resolve(preferences: preferences)
+        self.codexHomePath = codexHome?.path
+        self.codexHomeErrorMessage = codexHome == nil ? "检测到多个 Codex 登录目录，请选择一个。" : nil
         self.launchAtLogin = SMAppService.mainApp.status == .enabled
         self.notificationsEnabled = preferences.object(forKey: Self.notificationsEnabledKey) as? Bool ?? true
     }
@@ -110,6 +110,13 @@ public final class UsageStore: ObservableObject {
                 Task { await refresh() }
             }
         }
+
+        let preferences = self.preferences
+        let codexHome = await Task.detached {
+            CodexHomeLocator.resolve(preferences: preferences)
+        }.value
+        codexHomePath = codexHome?.path
+        codexHomeErrorMessage = codexHome == nil ? "检测到多个 Codex 登录目录，请选择一个。" : nil
 
         do {
             let newSnapshot = try await fetcher.fetchSnapshot()
@@ -180,9 +187,9 @@ public final class UsageStore: ObservableObject {
 
     public func resetCodexHomeDirectory() {
         preferences.removeObject(forKey: CodexHomeLocator.overridePreferenceKey)
-        let needsSelection = CodexHomeLocator.requiresManualSelection(preferences: preferences)
-        codexHomePath = CodexHomeLocator.resolve(preferences: preferences)?.path
-        codexHomeErrorMessage = needsSelection ? "检测到多个 Codex 登录目录，请选择一个。" : nil
+        let codexHome = CodexHomeLocator.resolve(preferences: preferences)
+        codexHomePath = codexHome?.path
+        codexHomeErrorMessage = codexHome == nil ? "检测到多个 Codex 登录目录，请选择一个。" : nil
         Task { await refresh() }
     }
 

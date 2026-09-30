@@ -26,6 +26,17 @@
 
 App 通过本机 `codex app-server --stdio` 调用实验性 JSON-RPC 接口，不会读取、复制或保存登录 token。该协议可能随 Codex 升级发生变化。
 
+### Codex 配置目录
+
+App 按以下顺序确定数据读取目录，并将结果传给本机 Codex 进程：
+
+1. 菜单中手动选择的目录。
+2. App 环境变量中的 `CODEX_HOME`。
+3. 用户登录 shell 中的 `CODEX_HOME`，适用于从 Finder 或开机启动、未继承终端环境变量的情况。
+4. 检查 `~/Library/Application Support/Codex/home` 和 `~/.codex` 中的登录文件；只有一个匹配时使用该目录，两个都匹配时提示手动选择，都没有时使用 `~/.codex`。
+
+shell 探测会执行交互式登录 shell 的启动配置，最多等待 2 秒；失败或未设置变量时使用候选目录。每次读取数据时重新确定目录。手动选择的目录会保存在本机，点击「自动检测」可恢复自动选择。配置目录可以位于任意位置，不要求迁回 `~/.codex`。
+
 ## 构建
 
 ```bash

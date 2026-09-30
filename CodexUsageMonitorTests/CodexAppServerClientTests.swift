@@ -3,6 +3,59 @@ import XCTest
 @testable import CodexUsageMonitor
 
 final class CodexAppServerClientTests: XCTestCase {
+    func testHomeResolutionReadsShellConfigurationWithoutInheritedCodexHome() throws {
+        let directory = FileManager.default.temporaryDirectory.appending(path: UUID().uuidString)
+        try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
+        defer { try? FileManager.default.removeItem(at: directory) }
+        let suite = "CodexHomeTests.\(UUID().uuidString)"
+        let preferences = UserDefaults(suiteName: suite)!
+        defer { preferences.removePersistentDomain(forName: suite) }
+        try "echo startup-noise\nexport CODEX_HOME='/tmp/custom Codex home'\n".write(
+            to: directory.appending(path: ".zshenv"), atomically: true, encoding: .utf8
+        )
+        let environment = ["SHELL": "/bin/zsh", "ZDOTDIR": directory.path, "HOME": directory.path]
+        XCTAssertEqual(CodexHomeLocator.resolve(environment: environment, preferences: preferences)?.path,
+                       "/tmp/custom Codex home")
+        var inherited = environment
+        inherited["CODEX_HOME"] = "/tmp/inherited-home"
+        XCTAssertEqual(CodexHomeLocator.resolve(environment: inherited, preferences: preferences)?.path,
+                       "/tmp/inherited-home")
+        preferences.set("/tmp/manual-home", forKey: CodexHomeLocator.overridePreferenceKey)
+        XCTAssertEqual(CodexHomeLocator.resolve(environment: inherited, preferences: preferences)?.path,
+                       "/tmp/manual-home")
+    }
+
+    func testHomeFallbackWhenShellIsUnavailableUnsetOrStuck() throws {
+        let directory = FileManager.default.temporaryDirectory.appending(path: UUID().uuidString)
+        try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
+        defer { try? FileManager.default.removeItem(at: directory) }
+        let suite = "CodexHomeTests.\(UUID().uuidString)"
+        let preferences = UserDefaults(suiteName: suite)!
+        defer { preferences.removePersistentDomain(forName: suite) }
+        let fileManager = HomeFileManager(home: directory)
+        let environment = ["SHELL": "/bin/zsh", "ZDOTDIR": directory.path, "HOME": directory.path]
+        for script in ["unset CODEX_HOME", "export CODEX_HOME=''", "exit 1", "while true; do :; done"] {
+            try script.write(to: directory.appending(path: ".zshenv"), atomically: true, encoding: .utf8)
+            let start = Date()
+            XCTAssertEqual(CodexHomeLocator.resolve(environment: environment, preferences: preferences,
+                                                    fileManager: fileManager)?.path,
+                           directory.appending(path: ".codex").path)
+            XCTAssertLessThan(Date().timeIntervalSince(start), 5)
+        }
+        let unavailable = ["SHELL": "/nonexistent/shell"]
+        let desktop = directory.appending(path: "Library/Application Support/Codex/home")
+        let legacy = directory.appending(path: ".codex")
+        for home in [desktop, legacy] {
+            try fileManager.createDirectory(at: home, withIntermediateDirectories: true)
+            try Data().write(to: home.appending(path: "auth.json"))
+        }
+        XCTAssertNil(CodexHomeLocator.resolve(environment: unavailable, preferences: preferences,
+                                             fileManager: fileManager))
+        try fileManager.removeItem(at: legacy)
+        XCTAssertEqual(CodexHomeLocator.resolve(environment: unavailable, preferences: preferences,
+                                               fileManager: fileManager), desktop)
+    }
+
     func testLiveAccountWhenExplicitlyEnabled() async throws {
         guard ProcessInfo.processInfo.environment["RUN_LIVE_CODEX_TEST"] == "1" else {
             throw XCTSkip("Set RUN_LIVE_CODEX_TEST=1 to query the current Codex account")
@@ -76,6 +129,12 @@ final class CodexAppServerClientTests: XCTestCase {
             Data(#"{"id":3,"result":{"summary":{"lifetimeTokens":0},"dailyUsageBuckets":[]}}"#.utf8)
         ]
     }
+}
+
+private final class HomeFileManager: FileManager, @unchecked Sendable {
+    private let home: URL
+    init(home: URL) { self.home = home; super.init() }
+    override var homeDirectoryForCurrentUser: URL { home }
 }
 
 private struct FakeExecutor: AppServerProcessExecuting {
