@@ -1,0 +1,146 @@
+# Codex Usage Monitor
+
+[English](README.md) | 简体中文
+
+[![Release](https://img.shields.io/github/v/release/nervouna/codex-usage-monitor)](https://github.com/nervouna/codex-usage-monitor/releases/latest)
+![macOS 14+](https://img.shields.io/badge/macOS-14%2B-lightgrey)
+[![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
+
+<!-- banner -->
+
+一个原生 macOS 菜单栏 App，用于查看当前 ChatGPT 账号的 Codex 额度和 token 用量。
+
+<!-- screenshots -->
+
+## 状态
+
+Codex Usage Monitor 是个人项目，作者为自己的 Codex 账号而做，按现状分享。运行需要 macOS 14 或更高版本（Apple Silicon 或 Intel）、ChatGPT App 或 Codex CLI，并且 Codex 已使用 ChatGPT 账号登录。界面只有简体中文。GitHub Release 提供经过公证的 universal ZIP，最新版本为 v1.0.1。App 依赖 Codex 的实验性接口，Codex 升级后可能失效。
+
+## 开发方式
+
+大部分代码由编程代理编写。`AGENTS.md` 是它们遵循的规则，内容是打包：`scripts/package.sh` 是唯一的打包入口，它的 Git 门禁（签名包要求工作区干净，公证包要求 `main` 与 `origin/main` 一致）不得绕过。报告 bug 或提交修复见 [CONTRIBUTING.md](CONTRIBUTING.md)，安全问题见 [SECURITY.md](SECURITY.md)。
+
+## 功能
+
+- 菜单栏实时显示标准 Codex 7 天滚动额度的剩余百分比。
+- 显示额度重置时间，以及其他模型（例如 Codex Spark）的独立额度。
+- 显示过去 7/30 个完整自然日的总用量、日均用量和账号历史累计用量。
+- 每 5 分钟自动刷新，支持手动刷新和开机启动。
+- 刷新失败时保留最后一次成功数据并提示数据可能已过期。
+- 实际观察到标准 Codex 周额度从非 100% 回到 100% 时发送本地通知，正文包含当前剩余、下次重置时间和过去 7 天用量。
+- 每个额度周期首次降至 20% 或以下时提醒一次。
+
+## 安装
+
+1. 从[最新 Release](https://github.com/nervouna/codex-usage-monitor/releases/latest) 下载 ZIP 并解压。
+2. 将 `Codex Usage Monitor.app` 移入 `/Applications` 并打开。App 显示在菜单栏，不在 Dock 中。
+3. 如需开机启动，在菜单中打开“开机时启动”。
+
+## 额度通知
+
+更新后首次打开菜单弹窗时，App 会请求 macOS 通知权限。菜单中的“额度通知”开关默认开启，可随时关闭；如果系统权限被拒绝，可从菜单直接打开系统设置。
+
+额度状态随每次成功刷新保存在本机。首次取得数据只建立检测基线，不会误报；后续只有实际观察到剩余额度从非 100% 回到 100% 时才会通知。如果 App 未观察到 100% 状态，则不会补发重置通知。检测沿用 5 分钟刷新间隔，跨设备使用可能导致通知略有延迟。
+
+## 前置条件
+
+- macOS 14 或更高版本。
+- 已安装 ChatGPT App 或 Codex CLI。
+- Codex 已使用 ChatGPT 账号登录。
+
+App 通过本机 `codex app-server --stdio` 调用实验性 JSON-RPC 接口，不会读取、复制或保存登录 token。该协议可能随 Codex 升级发生变化。
+
+### Codex 配置目录
+
+App 按以下顺序确定数据读取目录，并将结果传给本机 Codex 进程：
+
+1. 菜单中手动选择的目录。
+2. App 环境变量中的 `CODEX_HOME`。
+3. 用户登录 shell 中的 `CODEX_HOME`，适用于从 Finder 或开机启动、未继承终端环境变量的情况。
+4. 检查 `~/Library/Application Support/Codex/home` 和 `~/.codex` 中的登录文件；只有一个匹配时使用该目录，两个都匹配时提示手动选择，都没有时使用 `~/.codex`。
+
+shell 探测会执行交互式登录 shell 的启动配置，最多等待 2 秒；失败或未设置变量时使用候选目录。每次读取数据时重新确定目录。手动选择的目录会保存在本机，点击「自动检测」可恢复自动选择。配置目录可以位于任意位置，不要求迁回 `~/.codex`。
+
+## 读取的内容与联网
+
+App 本身不建立网络连接。每次刷新时：
+
+1. 确定 Codex 配置目录（见下文）。查找时只检查候选目录中是否存在 `auth.json`，不读取、复制或保存该文件及任何 token。
+2. 从固定位置（`/Applications` 中的 ChatGPT 或 Codex App、`/opt/homebrew/bin`、`/usr/local/bin`、`~/.local/bin` 和 mise 的 Node LTS）启动 `codex app-server --stdio`，并把 `CODEX_HOME` 设为该目录。
+3. 通过实验性 JSON-RPC 接口（`account/rateLimits/read`、`account/usage/read`）请求额度和用量。Codex 使用自己配置目录中的登录信息，从 OpenAI 获取数据。
+
+App 在其 user defaults（`io.damao.CodexUsageMonitor`）中保存：手动选择的目录、通知开关、是否已请求过通知权限，以及用于通知的最近一次额度状态。
+
+## 卸载
+
+1. 在菜单中关闭“开机时启动”，然后点击“退出”。
+2. 将 `Codex Usage Monitor.app` 移到废纸篓。
+3. 如需删除设置：`defaults delete io.damao.CodexUsageMonitor`。
+
+App 不会修改 Codex 配置目录中的任何内容。
+
+## 构建
+
+```bash
+xcodebuild \
+  -project CodexUsageMonitor.xcodeproj \
+  -scheme CodexUsageMonitor \
+  -configuration Debug \
+  -derivedDataPath .build/DerivedData \
+  build
+```
+
+构建产物位于 `.build/DerivedData/Build/Products/Debug/Codex Usage Monitor.app`。
+
+运行测试：
+
+```bash
+xcodebuild \
+  -project CodexUsageMonitor.xcodeproj \
+  -scheme CodexUsageMonitor \
+  -derivedDataPath .build/DerivedData \
+  test
+```
+
+开机启动需要从 `.app` 包运行；直接运行内部可执行文件时，系统可能拒绝注册登录项。
+
+## 打包
+
+统一使用 `scripts/package.sh` 生成 Release universal ZIP。先运行 `--dry-run` 查看 Git 门禁、当前和下一个 build number、产物路径及外部操作；dry run 不修改文件、不提交、不推送，也不上传公证请求。
+
+```bash
+./scripts/package.sh adhoc --dry-run
+./scripts/package.sh signed --dry-run
+NOTARYTOOL_PROFILE=codex-usage-monitor ./scripts/package.sh notarized --dry-run
+```
+
+确认预检信息后，再执行对应命令：
+
+```bash
+./scripts/package.sh adhoc
+./scripts/package.sh signed
+NOTARYTOOL_PROFILE=codex-usage-monitor \
+  ./scripts/package.sh notarized --confirm-publish
+```
+
+- `adhoc`：使用 ad hoc 签名，适合本机验证。允许脏工作区，会把未提交内容打入 App；build number 修改保留在工作区，不自动提交。
+- `signed`：使用 Developer ID Application 签名，适合分享试用，但不代表已通过 Gatekeeper 公证。要求工作区完全干净；测试通过后只提交 build-number 修改，不自动 push。只有一个可用身份时自动选择；有多个身份时，通过 `DEVELOPER_ID_APPLICATION` 和可选的 `DEVELOPMENT_TEAM` 显式指定。
+- `notarized`：用于正式发布。要求工作区完全干净、当前分支为 `main`，且开始时本地 `main` 与最新 `origin/main` 完全一致。脚本测试通过后提交 build-number 修改并 push，再提交 Apple 公证、装订 ticket 并通过 Gatekeeper 验证。正式执行必须显式提供 `--confirm-publish`。
+
+`signed` 和 `notarized` 会在 build 自增前运行完整 XCTest；测试失败不会消耗 build number。build 提交一旦创建，即使后续构建或公证失败也会保留，不应回滚或复用。脚本不会创建 Git tag、GitHub Release，也不会修改 marketing version。
+
+公证凭据只应保存在 Keychain 中。可以在本机交互式创建 profile，不能把 Apple ID 密码或 app-specific password 写入仓库：
+
+```bash
+xcrun notarytool store-credentials codex-usage-monitor
+```
+
+构建中间文件只写入 `.build/staging/`。所有验证通过后，最终 ZIP 才会移动到 `.build/releases/`，文件名格式为：
+
+```text
+Codex-Usage-Monitor-macOS-universal-<adhoc|signed|notarized>-YYYY-MM-DD-build-N.zip
+```
+
+## 许可证
+
+MIT，见 [LICENSE](LICENSE)。
