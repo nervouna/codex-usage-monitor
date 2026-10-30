@@ -1,0 +1,56 @@
+name: Bug report
+description: Something in Codex Usage Monitor does not work as described
+labels: [bug]
+body:
+  - type: textarea
+    id: what
+    attributes:
+      label: What happens
+      description: What you did and what went wrong. The error text shown in the menu helps.
+    validations:
+      required: true
+  - type: textarea
+    id: repro
+    attributes:
+      label: How to reproduce
+      description: The steps that show it, including how Codex is installed and where its configuration directory is.
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: What you expected
+    validations:
+      required: true
+  - type: input
+    id: version
+    attributes:
+      label: Version
+      description: The release (for example v1.0.1) or the commit you built.
+    validations:
+      required: true
+  - type: input
+    id: macos
+    attributes:
+      label: macOS version
+    validations:
+      required: true
+  - type: dropdown
+    id: where
+    attributes:
+      label: Where
+      options:
+        - Quota in the menu bar
+        - Token usage
+        - Quota notifications
+        - Codex directory detection
+        - Launch at login
+        - Packaging script
+        - Docs
+    validations:
+      required: true
+  - type: textarea
+    id: fix
+    attributes:
+      label: Suggested fix
+      description: Optional. If you know where the cause is, say so.
