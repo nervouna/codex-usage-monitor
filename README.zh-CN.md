@@ -10,7 +10,6 @@
 
 一个原生 macOS 菜单栏 App，用于查看当前 ChatGPT 账号的 Codex 额度和 token 用量。
 
-<!-- screenshots -->
 
 ## 状态
 

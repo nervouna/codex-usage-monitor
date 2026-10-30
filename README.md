@@ -10,7 +10,6 @@ English | [简体中文](README.zh-CN.md)
 
 A native macOS menu bar app that shows the Codex quota and token usage of the ChatGPT account you are signed in with. It gets the numbers from the Codex CLI on your Mac and keeps no login data of its own.
 
-<!-- screenshots -->
 
 ## Status
 
