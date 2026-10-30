@@ -6,7 +6,7 @@ English | [简体中文](README.zh-CN.md)
 ![macOS 14+](https://img.shields.io/badge/macOS-14%2B-lightgrey)
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 
-<!-- banner -->
+![Codex Usage Monitor](docs/images/banner.jpg)
 
 A native macOS menu bar app that shows the Codex quota and token usage of the ChatGPT account you are signed in with. It gets the numbers from the Codex CLI on your Mac and keeps no login data of its own.
 

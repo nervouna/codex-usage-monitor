@@ -6,7 +6,7 @@
 ![macOS 14+](https://img.shields.io/badge/macOS-14%2B-lightgrey)
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 
-<!-- banner -->
+![Codex Usage Monitor](docs/images/banner.jpg)
 
 一个原生 macOS 菜单栏 App，用于查看当前 ChatGPT 账号的 Codex 额度和 token 用量。
 
